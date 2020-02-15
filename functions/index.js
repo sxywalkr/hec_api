@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const dayjs = require('dayjs');
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -45,12 +46,13 @@ app.get('/api/tes', (req, res) => {
    }
 })
 
+// token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhlY2JwanMiLCJwYXNzd29yZCI6InN1cGVycGFzc3dvcmQiLCJpYXQiOjE1ODE3MjA1MjB9.buwD9uBjATjGKSnAHtBc34oORIyFvkhspKMvCQoB8W0
 app.post('/api/token', (req, res) => {
    try {
       var username = req.body.username;
       var password = req.body.password;
       // console.log(req.headers.username, password)
-      if (!username || !password) { return res.status(500).send('not valid') }
+      if (username !== 'hecbpjs' || password !== 'superpassword' || !username || !password) { return res.status(500).send('login not valid') }
 
       jwt.sign({ username, password }, 'secret', function (err, token) {
          try {
@@ -73,7 +75,24 @@ app.post('/api/get-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var nomorkartu = req.body.nomorkartu;
+      if (!nomorkartu || nomorkartu.length !== 13) { return res.status(500).send('nomorkartu not valid') }
+      var nik = req.body.nik;
+      if (!nik || nik.length !== 16) { return res.status(500).send('nik not valid') }
       var tanggalperiksa = req.body.tanggalperiksa;
+      console.log(dayjs(tanggalperiksa).diff(dayjs(), 'day'))
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD') ) { return res.status(500).send('format tanggalperiksa not valid') }
+      if (dayjs(tanggalperiksa).isBefore(dayjs()) === true ) { return res.status(500).send('tanggalperiksa harus H+1') }
+      if (dayjs(tanggalperiksa).day() === 0) { return res.status(500).send('tanggalperiksa tidak boleh minggu') }
+      if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) { return res.status(500).send('tanggalperiksa <90 hari tanggalkunjungan') }
+      var kodepoli = req.body.kodepoli;
+      if (kodepoli !== '142') { return res.status(500).send('kodepoli not valid') }
+      var jenisreferensi = req.body.jenisreferensi;
+      if (jenisreferensi !== 1) { return res.status(500).send('jenisreferensi not valid') }
+      var jenisrequest = req.body.jenisrequest;
+      if (jenisrequest !== 2) { return res.status(500).send('jenisrequest not valid') }
+      var polieksekutif = req.body.polieksekutif;
+      if (polieksekutif !== 0) { return res.status(500).send('polieksekutif not valid') }
+      
       var response = {};
       var userTanggalBooking2 = 9999
       var objUserUid = 9999
@@ -90,7 +109,7 @@ app.post('/api/get-antrian', (req, res) => {
          try {
             username = decoded.username;
             password = decoded.password;
-            if (username === '"hecbpjs"' && password === '"superpassword"') {
+            if (username === 'hecbpjs' && password === 'superpassword') {
                // cek nomor kartu bpjs di system
                admin.database().ref('users').orderByChild('userNoBpjs').equalTo(nomorkartu).once('value')
                   .then((snapshot) => {
@@ -292,12 +311,19 @@ app.post('/api/get-antrian', (req, res) => {
    }
 });
 
+function validate(date, format) {
+   return dayjs(date, format).format(format) === date;
+}
+
 app.post('/api/get-rekap-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalperiksa = req.body.tanggalperiksa;
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD') || dayjs(tanggalperiksa).isBefore(dayjs()) === true) { return res.status(500).send('tanggalperiksa not valid') }
       var kodepoli = req.body.kodepoli;
+      if (kodepoli !== '142') { return res.status(500).send('kodepoli not valid') }
       var polieksekutif = req.body.polieksekutif;
+      if (polieksekutif !== 0) { return res.status(500).send('polieksekutif not valid') }
       var response = {};
       response.namapoli = 'Poli Mata';
 
@@ -307,8 +333,8 @@ app.post('/api/get-rekap-antrian', (req, res) => {
             username = decoded.username;
             password = decoded.password;
             var metadata = { message: 'OK', code: 200 }
-            if (username === '"hecbpjs"' && password === '"superpassword"') {
-               if (kodepoli === '001' && polieksekutif === '0') {
+            if (username === 'hecbpjs' && password === 'superpassword') {
+               if (kodepoli === '142' && polieksekutif === 0) {
                   admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}`).once('value')
                      .then((result) => {
                         if (result.exists()) {
@@ -324,8 +350,6 @@ app.post('/api/get-rekap-antrian', (req, res) => {
                            return res.status(500).send('no data');
                         }
                      })
-               } else {
-                  return res.status(500).send('unregistered data');
                }
             } else {
                return res.status(500).send('unregistered login');
