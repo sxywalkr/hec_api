@@ -138,14 +138,16 @@ app.post('/api/get-antrian', (req, res) => {
                                     // console.log(snapshot1.val())
                                     // var metadata = { message: 'OK', code: 200 }
                                     Object.keys(snapshot1.val()).map((key) => {
-                                       var metadata = { message: 'OK', code: 200 }
-                                       response.nomorantrean = snapshot1.val()[key].userBpjsNomorAntrean
-                                       response.kodebooking = snapshot1.val()[key].userBpjsNomorAntrean
-                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(snapshot1.val()[key].userBpjsNomorAntrean, 10) * 15 * 60000
-                                       response.jenisantrean = jenisrequest
-                                       response.namapoli = 'Poli 1'
-                                       response.namadokter = 'Dokter 1'
-                                       return res.status(200).send({ response, metadata })
+                                       var metadata = { message: 'Anda sudah terdaftar', code: 204 }
+                                       // response.nomorantrean = snapshot1.val()[key].userBpjsNomorAntrean
+                                       // response.kodebooking = snapshot1.val()[key].userBpjsNomorAntrean
+                                       // response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(snapshot1.val()[key].userBpjsNomorAntrean, 10) * 15 * 60000
+                                       // response.jenisantrean = jenisrequest
+                                       // response.namapoli = 'MATA'
+                                       // response.namadokter = 'Dokter 1'
+                                       return res.status(200).send({ 
+                                          // response, 
+                                          metadata })
                                     })
                                  } else {
                                     // console.log('/////// user ada di db dan belum ada tanggal antrian')
@@ -190,7 +192,7 @@ app.post('/api/get-antrian', (req, res) => {
                                           response.kodebooking = latestOnlineQueue
                                           response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
                                           response.jenisantrean = jenisrequest
-                                          response.namapoli = 'Poli 1'
+                                          response.namapoli = 'MATA'
                                           response.namadokter = 'Dokter 1'
                                           return res.status(200).send({ response, metadata })
                                        } else {
@@ -225,7 +227,7 @@ app.post('/api/get-antrian', (req, res) => {
                                           response.kodebooking = 4
                                           response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
                                           response.jenisantrean = jenisrequest
-                                          response.namapoli = 'Poli 1'
+                                          response.namapoli = 'MATA'
                                           response.namadokter = 'Dokter 1'
                                           return res.status(200).send({ response, metadata })
                                        }
@@ -241,7 +243,7 @@ app.post('/api/get-antrian', (req, res) => {
                                  
                                  var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
                                  ref1.then((result1) => {
-                                    console.log('user ada di db tp belum antrian 2')
+                                    // console.log('user ada di db tp belum antrian 2')
                                     if (result1.exists()) {
                                        // console.log('antrian online - next')
                                        var latestOnlineQueue = result1.val().latestOnlineQueue + 1
@@ -280,7 +282,7 @@ app.post('/api/get-antrian', (req, res) => {
                                        response.kodebooking = latestOnlineQueue
                                        response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
                                        response.jenisantrean = 1
-                                       response.namapoli = 'Poli 1'
+                                       response.namapoli = 'MATA'
                                        response.namadokter = 'Dokter 1'
                                        return res.status(200).send({ response, metadata })
                                     } else {
@@ -314,7 +316,7 @@ app.post('/api/get-antrian', (req, res) => {
                                        response.kodebooking = 4
                                        response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
                                        response.jenisantrean = jenisrequest
-                                       response.namapoli = 'Poli 1'
+                                       response.namapoli = 'MATA'
                                        response.namadokter = 'Dokter 1'
                                        return res.status(200).send({ response, metadata })
                                     }
@@ -388,7 +390,7 @@ app.post('/api/get-antrian', (req, res) => {
                                     response.kodebooking = latestOnlineQueue
                                     response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
                                     response.jenisantrean = jenisrequest
-                                    response.namapoli = 'Poli 1'
+                                    response.namapoli = 'MATA'
                                     response.namadokter = 'Dokter 1'
                                     return res.status(200).send({ response, metadata })
                                  } else {
@@ -431,7 +433,7 @@ app.post('/api/get-antrian', (req, res) => {
                                     response.kodebooking = 4
                                     response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
                                     response.jenisantrean = jenisrequest
-                                    response.namapoli = 'Poli 1'
+                                    response.namapoli = 'MATA'
                                     response.namadokter = 'Dokter 1'
                                     return res.status(200).send({ response, metadata })
                                  }
