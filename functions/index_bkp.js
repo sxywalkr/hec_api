@@ -98,7 +98,7 @@ app.post('/api/get-antrian', (req, res) => {
       if (polieksekutif !== 0) { return res.status(500).send('polieksekutif not valid') }
 
       var response = {};
-      // var userTanggalBooking2 = 9999
+      var userTanggalBooking2 = 9999
       var objUserUid = 9999
       var baseTimeAntrian = new Date(tanggalperiksa)
       if (baseTimeAntrian.getDay !== 5) {
@@ -118,41 +118,32 @@ app.post('/api/get-antrian', (req, res) => {
                admin.database().ref('users').orderByChild('userNoBpjs').equalTo(nomorkartu).once('value')
                   .then((snapshot) => {
                      if (snapshot.exists()) {
-                        // console.log('/////// user ada di db')
-                        // var metadata = { message: 'OK', code: 200 }
-                        admin.database().ref('userBpjs').orderByChild('userBpjsNomorReferensi').equalTo(nomorreferensi).once('value')
+                        // console.log('user ada di db')
+                        admin.database().ref('usersBpjs').orderByChild('userBpjsNomorReferensi').equalTo(nomorreferensi).once('value')
                            .then((snapshot1) => {
                               // start nomorreferensi
-                              // var metadata = { message: 'OK', code: 200 }
                               if (snapshot1.exists()) {
-                                 // console.log('/////// user nomorreferensi ada di db')
-                                 // console.log(snapshot1.val())
+                                 var metadata = { message: 'OK', code: 200 }
                                  Object.keys(snapshot.val()).map((key) => {
                                     objUserUid = snapshot.val()[key].userUid
-                                 })
-                                 Object.keys(snapshot1.val()).map((key) => {
-                                    userTanggalBooking9 = snapshot1.val()[key].userBpjsTanggalBooking9
+                                    userTanggalBooking9 = snapshot1.val()[key].userTanggalBooking9
                                  })
                                  if (userTanggalBooking9 !== '') {
-                                    // console.log('/////// user ada di db dan ambil nomor antrian')
-                                    // console.log(snapshot1.val())
-                                    // var metadata = { message: 'OK', code: 200 }
+                                    // console.log('user ada di db dan ambil nomor antrian')
                                     Object.keys(snapshot1.val()).map((key) => {
-                                       var metadata = { message: 'OK', code: 200 }
-                                       response.nomorantrean = snapshot1.val()[key].userBpjsNomorAntrean
-                                       response.kodebooking = snapshot1.val()[key].userBpjsNomorAntrean
-                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(snapshot1.val()[key].userBpjsNomorAntrean, 10) * 15 * 60000
-                                       response.jenisantrean = jenisrequest
+                                       response.nomorantrean = snapshot1.val()[key].userNomorAntrian
+                                       response.kodebooking = snapshot1.val()[key].userNomorAntrian
+                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(snapshot.val()[key].userNomorAntrian, 10) * 15 * 60000
+                                       response.jenisantrean = 1
                                        response.namapoli = 'Poli 1'
                                        response.namadokter = 'Dokter 1'
                                        return res.status(200).send({ response, metadata })
                                     })
                                  } else {
-                                    // console.log('/////// user ada di db dan belum ada tanggal antrian')
                                     var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
                                     ref1.then((result1) => {
+                                       console.log('user ada di db tp belum antrian')
                                        if (result1.exists()) {
-                                          // console.log('/////// user ada di db sudah belum antrian')
                                           // console.log('antrian online - next')
                                           var latestOnlineQueue = result1.val().latestOnlineQueue + 1
                                           var antrianTotal = result1.val().antrianTotal + 1
@@ -174,28 +165,20 @@ app.post('/api/get-antrian', (req, res) => {
                                              antrianUserBpjsNomorReferensi: nomorreferensi,
                                              antrianTanggalBooking2: tanggalperiksa,
                                           })
-                                          admin.database().ref(`userBpjs`).push({
-                                             userBpjsUid: objUserUid,
-                                             userBpjsNomorReferensi: nomorreferensi,
-                                             userBpjsTanggalBooking9: tanggalperiksa,
-                                             userBpjsNomorAntrean: latestOnlineQueue
-                                          })
                                           admin.database().ref(`users/${objUserUid}`).update({
                                              userTanggalBooking2: tanggalperiksa,
                                              userNomorAntrian: latestOnlineQueue,
                                              userFlagActivity: 'Booking Antrian',
                                           });
-                                          var metadata = { message: 'OK', code: 200 }
                                           response.nomorantrean = latestOnlineQueue
                                           response.kodebooking = latestOnlineQueue
                                           response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
-                                          response.jenisantrean = jenisrequest
+                                          response.jenisantrean = 1
                                           response.namapoli = 'Poli 1'
                                           response.namadokter = 'Dokter 1'
                                           return res.status(200).send({ response, metadata })
                                        } else {
                                           // console.log('antrian online - 4')
-                                          console.log('/////// user ada di db tp belum antrian')
                                           admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).update({
                                              latestOnlineQueue: 4,
                                              antrianTotal: 1
@@ -208,23 +191,16 @@ app.post('/api/get-antrian', (req, res) => {
                                              antrianUserBpjsNomorReferensi: nomorreferensi,
                                              antrianTanggalBooking2: tanggalperiksa,
                                           })
-                                          admin.database().ref(`userBpjs`).push({
-                                             userBpjsUid: objUserUid,
-                                             userBpjsNomorReferensi: nomorreferensi,
-                                             userBpjsTanggalBooking9: tanggalperiksa,
-                                             userBpjsNomorAntrean: 4
-                                          })
                                           admin.database().ref('users/' + objUserUid).update({
                                              userTanggalBooking2: tanggalperiksa,
                                              userNomorAntrian: 4,
                                              userFlagActivity: 'Booking Antrian',
                                              userStatusPasien: 'BPJS',
                                           });
-                                          var metadata = { message: 'OK', code: 200 }
                                           response.nomorantrean = 4
                                           response.kodebooking = 4
                                           response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
-                                          response.jenisantrean = jenisrequest
+                                          response.jenisantrean = 1
                                           response.namapoli = 'Poli 1'
                                           response.namadokter = 'Dokter 1'
                                           return res.status(200).send({ response, metadata })
@@ -233,100 +209,97 @@ app.post('/api/get-antrian', (req, res) => {
                                  }
                               } else {
                                  // userBpjsNomorReferensi tidak sesuai dengan nomorreferensi
-                                 // console.log('/////// nomorreferensi belum ada di db')
-                                 // var metadata = { message: 'OK', code: 200 }
+                                 var metadata = { message: 'OK', code: 200 }
                                  Object.keys(snapshot.val()).map((key) => {
                                     objUserUid = snapshot.val()[key].userUid
+                                    // userTanggalBooking9 = snapshot1.val()[key].userTanggalBooking9
                                  })
-                                 
-                                 var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
-                                 ref1.then((result1) => {
-                                    console.log('user ada di db tp belum antrian 2')
-                                    if (result1.exists()) {
-                                       // console.log('antrian online - next')
-                                       var latestOnlineQueue = result1.val().latestOnlineQueue + 1
-                                       var antrianTotal = result1.val().antrianTotal + 1
-                                       const ruleAntrian = [4, 5, 9, 10, 14, 15, 19, 20, 24, 25, 29, 30, 34, 35, 39, 40]
-                                       if (ruleAntrian.includes(latestOnlineQueue)) {
-                                          latestOnlineQueue = latestOnlineQueue + 0
-                                       } else {
-                                          latestOnlineQueue = latestOnlineQueue + 3
-                                       }
-                                       admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}`).update({
-                                          latestOnlineQueue: latestOnlineQueue,
-                                          antrianTotal: antrianTotal
-                                       })
-                                       admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}/detail/${latestOnlineQueue}`).update({
-                                          antrianNomor: latestOnlineQueue,
-                                          antrianUserUid: objUserUid,
-                                          antrianUserNama: nomorkartu,
-                                          antrianUserNoBpjs: nomorkartu,
-                                          antrianUserBpjsNomorReferensi: nomorreferensi,
-                                          antrianTanggalBooking9: tanggalperiksa,
-                                       })
-                                       admin.database().ref(`userBpjs`).push({
-                                          userBpjsUid: objUserUid,
-                                          userBpjsNomorReferensi: nomorreferensi,
-                                          userBpjsTanggalBooking9: tanggalperiksa,
-                                          userBpjsNomorAntrean: latestOnlineQueue
-                                       })
-                                       admin.database().ref(`users/${objUserUid}`).update({
-                                          userTanggalBooking9: tanggalperiksa,
-                                          userNomorAntrian: latestOnlineQueue,
-                                          userFlagActivity: 'Booking Antrian',
-                                       });
-                                       var metadata = { message: 'OK', code: 200 }
-                                       response.nomorantrean = latestOnlineQueue
-                                       response.kodebooking = latestOnlineQueue
-                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
+                                 if (userTanggalBooking9 !== '') {
+                                    // console.log('user ada di db dan ambil nomor antrian')
+                                    Object.keys(snapshot.val()).map((key) => {
+                                       response.nomorantrean = snapshot.val()[key].userNomorAntrian
+                                       response.kodebooking = snapshot.val()[key].userNomorAntrian
+                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(snapshot.val()[key].userNomorAntrian, 10) * 15 * 60000
                                        response.jenisantrean = 1
                                        response.namapoli = 'Poli 1'
                                        response.namadokter = 'Dokter 1'
                                        return res.status(200).send({ response, metadata })
-                                    } else {
-                                       // console.log('antrian online - 4')
-                                       admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).update({
-                                          latestOnlineQueue: 4,
-                                          antrianTotal: 1
-                                       })
-                                       admin.database().ref('hecAntrian/indexes/' + tanggalperiksa + '/detail/4').update({
-                                          antrianNomor: 4,
-                                          antrianUserUid: objUserUid,
-                                          antrianUserNama: nomorkartu,
-                                          antrianUserNoBpjs: nomorkartu,
-                                          antrianUserBpjsNomorReferensi: nomorreferensi,
-                                          antrianTanggalBooking9: tanggalperiksa,
-                                       })
-                                       admin.database().ref(`userBpjs`).push({
-                                          userBpjsUid: objUserUid,
-                                          userBpjsNomorReferensi: nomorreferensi,
-                                          userBpjsTanggalBooking9: tanggalperiksa,
-                                          userBpjsNomorAntrean: 4
-                                       })
-                                       admin.database().ref('users/' + objUserUid).update({
-                                          userTanggalBooking9: tanggalperiksa,
-                                          userNomorAntrian: 4,
-                                          userFlagActivity: 'Booking Antrian',
-                                          userStatusPasien: 'BPJS',
-                                       });
-                                       var metadata = { message: 'OK', code: 200 }
-                                       response.nomorantrean = 4
-                                       response.kodebooking = 4
-                                       response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
-                                       response.jenisantrean = jenisrequest
-                                       response.namapoli = 'Poli 1'
-                                       response.namadokter = 'Dokter 1'
-                                       return res.status(200).send({ response, metadata })
-                                    }
-                                 })
-
+                                    })
+                                 } else {
+                                    var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
+                                    ref1.then((result1) => {
+                                       console.log('user ada di db tp belum antrian')
+                                       if (result1.exists()) {
+                                          // console.log('antrian online - next')
+                                          var latestOnlineQueue = result1.val().latestOnlineQueue + 1
+                                          var antrianTotal = result1.val().antrianTotal + 1
+                                          const ruleAntrian = [4, 5, 9, 10, 14, 15, 19, 20, 24, 25, 29, 30, 34, 35, 39, 40]
+                                          if (ruleAntrian.includes(latestOnlineQueue)) {
+                                             latestOnlineQueue = latestOnlineQueue + 0
+                                          } else {
+                                             latestOnlineQueue = latestOnlineQueue + 3
+                                          }
+                                          admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}`).update({
+                                             latestOnlineQueue: latestOnlineQueue,
+                                             antrianTotal: antrianTotal
+                                          })
+                                          admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}/detail/${latestOnlineQueue}`).update({
+                                             antrianNomor: latestOnlineQueue,
+                                             antrianUserUid: objUserUid,
+                                             antrianUserNama: nomorkartu,
+                                             antrianUserNoBpjs: nomorkartu,
+                                             antrianUserBpjsNomorReferensi: nomorreferensi,
+                                             antrianTanggalBooking9: tanggalperiksa,
+                                          })
+                                          admin.database().ref(`users/${objUserUid}`).update({
+                                             userTanggalBooking9: tanggalperiksa,
+                                             userNomorAntrian: latestOnlineQueue,
+                                             userFlagActivity: 'Booking Antrian',
+                                          });
+                                          response.nomorantrean = latestOnlineQueue
+                                          response.kodebooking = latestOnlineQueue
+                                          response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
+                                          response.jenisantrean = 1
+                                          response.namapoli = 'Poli 1'
+                                          response.namadokter = 'Dokter 1'
+                                          return res.status(200).send({ response, metadata })
+                                       } else {
+                                          // console.log('antrian online - 4')
+                                          admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).update({
+                                             latestOnlineQueue: 4,
+                                             antrianTotal: 1
+                                          })
+                                          admin.database().ref('hecAntrian/indexes/' + tanggalperiksa + '/detail/4').update({
+                                             antrianNomor: 4,
+                                             antrianUserUid: objUserUid,
+                                             antrianUserNama: nomorkartu,
+                                             antrianUserNoBpjs: nomorkartu,
+                                             antrianUserBpjsNomorReferensi: nomorreferensi,
+                                             antrianTanggalBooking9: tanggalperiksa,
+                                          })
+                                          admin.database().ref('users/' + objUserUid).update({
+                                             userTanggalBooking9: tanggalperiksa,
+                                             userNomorAntrian: 4,
+                                             userFlagActivity: 'Booking Antrian',
+                                             userStatusPasien: 'BPJS',
+                                          });
+                                          response.nomorantrean = 4
+                                          response.kodebooking = 4
+                                          response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
+                                          response.jenisantrean = 1
+                                          response.namapoli = 'Poli 1'
+                                          response.namadokter = 'Dokter 1'
+                                          return res.status(200).send({ response, metadata })
+                                       }
+                                    })
+                                 }
                               }
                               // end nomorreferensi
                            })
 
                      } else {
                         // console.log('user ny registered on db')
-                        // user baru
+                        // admin.auth
                         admin.auth().createUser({
                            email: nomorkartu + '@hec.com',
                            emailVerified: false,
@@ -336,12 +309,10 @@ app.post('/api/get-antrian', (req, res) => {
                            disabled: false
                         })
                            .then((userRecord) => {
-                              // console.log('user cek')
                               objUserUid = userRecord.uid;
                               var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
                               ref1.then((result1) => {
                                  // console.log('user belum antrian')
-                                 
                                  if (result1.exists()) {
                                     // console.log('antrian online - next')
                                     var latestOnlineQueue = result1.val().latestOnlineQueue + 1
@@ -356,11 +327,10 @@ app.post('/api/get-antrian', (req, res) => {
                                        latestOnlineQueue: latestOnlineQueue,
                                        antrianTotal: antrianTotal
                                     })
-                                    admin.database().ref(`userBpjs`).push({
+                                    admin.database().ref(`userBpjs/${objUserUid}`).update({
                                        userBpjsUid: objUserUid,
                                        userBpjsNomorReferensi: nomorreferensi,
                                        userBpjsTanggalBooking9: tanggalperiksa,
-                                       userBpjsNomorAntrean: latestOnlineQueue
                                     })
                                     admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}/detail/${latestOnlineQueue}`).update({
                                        antrianNomor: latestOnlineQueue,
@@ -383,11 +353,10 @@ app.post('/api/get-antrian', (req, res) => {
                                        userHandphone: '',
                                        userTanggalBooking: '',
                                     });
-                                    var metadata = { message: 'OK', code: 200 }
                                     response.nomorantrean = latestOnlineQueue
                                     response.kodebooking = latestOnlineQueue
                                     response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(latestOnlineQueue, 10) * 15 * 60000
-                                    response.jenisantrean = jenisrequest
+                                    response.jenisantrean = 1
                                     response.namapoli = 'Poli 1'
                                     response.namadokter = 'Dokter 1'
                                     return res.status(200).send({ response, metadata })
@@ -404,11 +373,10 @@ app.post('/api/get-antrian', (req, res) => {
                                        antrianUserNoBpjs: nomorkartu,
                                        antrianTanggalBooking2: tanggalperiksa,
                                     })
-                                    admin.database().ref(`userBpjs`).push({
+                                    admin.database().ref(`userBpjs/${objUserUid}`).update({
                                        userBpjsUid: objUserUid,
                                        userBpjsNomorReferensi: nomorreferensi,
                                        userBpjsTanggalBooking9: tanggalperiksa,
-                                       userBpjsNomorAntrean: 4
                                     })
                                     admin.database().ref('users/' + objUserUid).update({
                                        userTanggalBooking9: tanggalperiksa,
@@ -426,11 +394,10 @@ app.post('/api/get-antrian', (req, res) => {
                                        // userSex: pasienSex,
                                        // userTanggalLahir: dayjs(pasienTanggalLahir).format('YYYY-MM-DD'),
                                     });
-                                    var metadata = { message: 'OK', code: 200 }
                                     response.nomorantrean = 4
                                     response.kodebooking = 4
                                     response.estimasidilayani = parseInt(baseTimeAntrian) + parseInt(4, 10) * 15 * 60000
-                                    response.jenisantrean = jenisrequest
+                                    response.jenisantrean = 1
                                     response.namapoli = 'Poli 1'
                                     response.namadokter = 'Dokter 1'
                                     return res.status(200).send({ response, metadata })
@@ -475,14 +442,14 @@ app.post('/api/get-rekap-antrian', (req, res) => {
             password = decoded.password;
             var metadata = { message: 'OK', code: 200 }
             if (username === 'hecbpjs' && password === 'superpassword') {
-               if (kodepoli === 'MAT' && polieksekutif === 0) {
+               if (kodepoli === '142' && polieksekutif === 0) {
                   admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}`).once('value')
                      .then((result) => {
                         if (result.exists()) {
                            var aa = result.val().latestOnlineQueue ? result.val().latestOnlineQueue : 0;
                            var bb = result.val().latestOfflineQueue ? result.val().latestOfflineQueue : 0;
                            var cc = result.val().antrianTotal ? result.val().antrianTotal : 0;
-                           // console.log(cc)
+                           console.log(cc)
                            response.totalantrean = aa > bb ? aa : bb;
                            response.jumlahterlayani = result.val().antrianTerlayani ? result.val().antrianTerlayani : 0;
                            response.lastupdate = new Date().getTime();
