@@ -82,6 +82,7 @@ app.post('/api/get-antrian', (req, res) => {
       if (!nik || nik.length !== 16) { return res.status(500).send('nik not valid') }
       var tanggalperiksa = req.body.tanggalperiksa;
       if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { return res.status(500).send('format tanggalperiksa not valid') }
+      // console.log(dayjs())
       if (dayjs(tanggalperiksa).isBefore(dayjs()) === true) { return res.status(500).send('tanggalperiksa harus H+1') }
       if (dayjs(tanggalperiksa).day() === 0) { return res.status(500).send('tanggalperiksa tidak boleh minggu') }
       if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) { return res.status(500).send('tanggalperiksa <90 hari tanggalkunjungan') }
@@ -462,7 +463,7 @@ app.post('/api/get-rekap-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalperiksa = req.body.tanggalperiksa;
-      if (!validate(tanggalperiksa, 'YYYY-MM-DD') || dayjs(tanggalperiksa).isBefore(dayjs()) === true) { return res.status(500).send('tanggalperiksa not valid') }
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { return res.status(500).send('tanggalperiksa not valid') }
       var kodepoli = req.body.kodepoli;
       if (kodepoli !== 'MAT') { return res.status(500).send('kodepoli not valid') }
       var polieksekutif = req.body.polieksekutif;
@@ -481,11 +482,11 @@ app.post('/api/get-rekap-antrian', (req, res) => {
                   admin.database().ref(`hecAntrian/indexes/${tanggalperiksa}`).once('value')
                      .then((result) => {
                         if (result.exists()) {
-                           var aa = result.val().latestOnlineQueue ? result.val().latestOnlineQueue : 0;
-                           var bb = result.val().latestOfflineQueue ? result.val().latestOfflineQueue : 0;
+                           // var aa = result.val().latestOnlineQueue ? result.val().latestOnlineQueue : 0;
+                           // var bb = result.val().latestOfflineQueue ? result.val().latestOfflineQueue : 0;
                            var cc = result.val().antrianTotal ? result.val().antrianTotal : 0;
                            // console.log(cc)
-                           response.totalantrean = aa > bb ? aa : bb;
+                           response.totalantrean = cc
                            response.jumlahterlayani = result.val().antrianTerlayani ? result.val().antrianTerlayani : 0;
                            response.lastupdate = new Date().getTime();
                            return res.status(200).send({ response, metadata })
