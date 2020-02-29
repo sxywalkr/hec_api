@@ -146,9 +146,10 @@ app.post('/api/get-antrian', (req, res) => {
                                        // response.jenisantrean = jenisrequest
                                        // response.namapoli = 'MATA'
                                        // response.namadokter = 'Dokter 1'
-                                       return res.status(200).send({ 
+                                       return res.status(200).send({
                                           // response, 
-                                          metadata })
+                                          metadata
+                                       })
                                     })
                                  } else {
                                     // console.log('/////// user ada di db dan belum ada tanggal antrian')
@@ -241,7 +242,7 @@ app.post('/api/get-antrian', (req, res) => {
                                  Object.keys(snapshot.val()).map((key) => {
                                     objUserUid = snapshot.val()[key].userUid
                                  })
-                                 
+
                                  var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
                                  ref1.then((result1) => {
                                     // console.log('user ada di db tp belum antrian 2')
@@ -344,7 +345,7 @@ app.post('/api/get-antrian', (req, res) => {
                               var ref1 = admin.database().ref('hecAntrian/indexes/' + tanggalperiksa).once('value');
                               ref1.then((result1) => {
                                  // console.log('user belum antrian')
-                                 
+
                                  if (result1.exists()) {
                                     // console.log('antrian online - next')
                                     var latestOnlineQueue = result1.val().latestOnlineQueue + 1
@@ -508,6 +509,200 @@ app.post('/api/get-rekap-antrian', (req, res) => {
       return res.status(500).send(error);
    }
 });
+
+///// ***** start - api get list kode booking operasi ***** /////
+app.post('/api/get-list-kode-booking-operasi', (req, res) => {
+   try {
+      var xtoken = req.headers['x-token'];
+      var nopeserta = req.body.nopeserta;
+      if (!nopeserta || nopeserta.length !== 13) { return res.status(500).send('nopeserta not valid') }
+      var response = {};
+
+      jwt.verify(xtoken, 'secret', function (err, decoded) {
+         if (err) { return res.status(500).send(err); }
+         try {
+            username = decoded.username;
+            password = decoded.password;
+            if (username === 'hecbpjs' && password === 'superpassword') {
+               admin.database().ref('users').orderByChild('userNoBpjs').equalTo(nopeserta).once('value')
+                  .then((snapshot) => {
+                     if (snapshot.exists()) {
+                        // console.log('////////// user ada di db')
+                        admin.database().ref('hecKamarOperasi').orderByChild('hecKoUserNoBpjs').equalTo(nopeserta).once('value')
+                           .then((snapshot1) => {
+                              if (snapshot1.exists()) {
+                                 // console.log('////////// jadwal operasi ada')
+                                 // if (snapshot1.val().hecKoTerlaksana === 0) {
+                                 var metadata = { message: 'OK', code: 200 }
+                                 // console.log(snapshot1.val())
+                                 var list1 = []
+                                 snapshot1.forEach((el) => {
+                                    if (el.val().hecKoTerlaksana === 0) {
+                                       list1.push({
+                                          kodebooking: el.val().hecKoKodeBooking,
+                                          tanggaloperasi: el.val().hecKoTanggalOperasi,
+                                          jenistindakan: el.val().hecKoJenisTindakan,
+                                          kodepoli: el.val().hecKoKodePoli,
+                                          namapoli: el.val().hecKoNamaPoli,
+                                          terlaksana: el.val().hecKoTerlaksana
+                                       })
+                                    }
+                                    response.list = list1
+                                 })
+                                 res.status(200).send({ response, metadata });
+
+                              } else {
+                                 // console.log('////////// jadwal operasi belum ada')
+                                 var metadata = { message: 'OK', code: 200 }
+                                 var list1 = []
+                                 response.list = list1
+                                 return res.status(200).send({ response, metadata });
+                              }
+                           })
+                     } else {
+                        // console.log('('////////// user ny registered on db')
+                        // admin.database().ref('hecKamarOperasi').once('value')
+                        // .then((snapshot1) => {
+                        //    if (snapshot1.exists()) {
+                        //       // console.log('////////// jadwal operasi ada')
+                        //    } else {
+                        //       // console.log('////////// jadwal operasi belum ada')
+                        //       var metadata = { message: 'OK', code: 200 }
+                        //       response.list = ''
+                        //       return res.status(200).send({response, metadata});
+                        //    }
+                        // })
+                        return res.status(500).send('unregistered login');
+                     }
+                  })
+            } else {
+               return res.status(500).send('unregistered login');
+            }
+         } catch (err) {
+            console.log(err)
+         }
+      });
+   }
+   catch (error) {
+      return res.status(500).send(error);
+   }
+});
+///// ***** end - api get list kode booking operasi ***** /////
+
+///// ***** start - api get list jadwal operasi ***** /////
+app.post('/api/get-list-jadwal-operasi', (req, res) => {
+   try {
+      var xtoken = req.headers['x-token'];
+      var tanggalawal = req.body.tanggalawal;
+      if (!validate(tanggalawal, 'YYYY-MM-DD')) { return res.status(500).send('format tanggalawal not valid') }
+      if (dayjs(tanggalawal).isBefore(dayjs()) === true) { return res.status(500).send('tanggalawal harus H+1') }
+      var tanggalakhir = req.body.tanggalakhir;
+      if (!validate(tanggalakhir, 'YYYY-MM-DD')) { return res.status(500).send('format tanggalakhir not valid') }
+      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) { return res.status(500).send('tanggalakhir harus H+2') }
+      var response = {};
+      // var nopeserta = req.body.nopeserta;
+      // if (!nopeserta || nopeserta.length !== 13) { return res.status(500).send('nopeserta not valid') }
+
+      jwt.verify(xtoken, 'secret', function (err, decoded) {
+         if (err) { return res.status(500).send(err); }
+         try {
+            username = decoded.username;
+            password = decoded.password;
+            if (username === 'hecbpjs' && password === 'superpassword') {
+               // admin.database().ref('users').orderByChild('userNoBpjs').equalTo(nopeserta).once('value')
+               //    .then((snapshot) => {
+               //       if (snapshot.exists()) {
+               // console.log('////////// user ada di db')
+               admin.database().ref('hecKamarOperasi').orderByChild('hecKoTanggalOperasi').startAt(tanggalawal).endAt(tanggalakhir).once('value')
+                  .then((snapshot1) => {
+                     if (snapshot1.exists()) {
+                        // admin.database().ref('hecKamarOperasi').once('value')
+                        //    .then((snapshot1) => {
+                        //       if (snapshot1.exists()) {
+                        //          // console.log('////////// jadwal operasi ada')
+                        var metadata = { message: 'OK', code: 200 }
+                        // console.log(snapshot1.val())
+                        var list1 = []
+                        snapshot1.forEach((el) => {
+                           list1.push({
+                              kodebooking: el.val().hecKoKodeBooking,
+                              tanggaloperasi: el.val().hecKoTanggalOperasi,
+                              jenistindakan: el.val().hecKoJenisTindakan,
+                              kodepoli: el.val().hecKoKodePoli,
+                              namapoli: el.val().hecKoNamaPoli,
+                              terlaksana: el.val().hecKoTerlaksana,
+                              nopeserta: el.val().hecKoUserNoBpjs,
+                              lastupdate: new Date().getTime()
+                           })
+                           response.list = list1
+                        })
+                        res.status(200).send({ response, metadata });
+                        //    } else {
+                        //       // console.log('////////// jadwal operasi belum ada')
+                        //       var metadata = { message: 'OK', code: 200 }
+                        //       response.list = ''
+                        //       return res.status(200).send({ response, metadata });
+                        //    }
+                        // })
+                     } else {
+                        // console.log('////////// jadwal operasi belum ada')
+                        var metadata = { message: 'OK', code: 200 }
+                        var list1 = []
+                        response.list = list1
+                        return res.status(200).send({ response, metadata });
+                     }
+                  })
+
+               // } else {
+               //    // console.log('('////////// user ny registered on db')
+               //    //    admin.database().ref('hecKamarOperasi').once('value')
+               //    //    .then((snapshot1) => {
+               //    //       if (snapshot1.exists()) {
+               //    //          // console.log('////////// jadwal operasi ada')
+               //    //       } else {
+               //    //          // console.log('////////// jadwal operasi belum ada')
+               //    //          return res.status(500).send({ message: 'Jadwal operasi belum ada', code: 204 });
+               //    //       }
+               //    //    })
+               //    return res.status(500).send('unregistered login');
+               // }
+               // })
+            } else {
+               return res.status(500).send('unregistered login');
+            }
+         } catch (err) {
+            console.log(err)
+         }
+      });
+   }
+   catch (error) {
+      return res.status(500).send(error);
+   }
+});
+///// ***** end - api get list jadwal operasi ***** /////
+
+
+///// ***** start - api add dummy jadwal operasi ***** /////
+app.post('/api/add-dummy-jadwal-operasi', (req, res) => {
+   try {
+      admin.database().ref('hecKamarOperasi').push({
+         hecKoKodeBooking: 'MAT100001',
+         hecKoTanggalOperasi: '2020-03-10',
+         hecKoJenisTindakan: 'operasi mata',
+         hecKoKodePoli: 'MAT',
+         hecKoNamaPoli: 'MATA',
+         hecKoTerlaksana: 1,
+         hecKoUserUid: 'K23DFp9kNYgU2wbqvVvzxqHPsry1',
+         hecKoUserNoBpjs: '0002045565625'
+      })
+      res.status(200).send('OK');
+   }
+   catch (error) {
+      return res.status(500).send(error);
+   }
+});
+///// ***** end - api add dummy jadwal operasi ***** /////
+
 
 // app.post('/api/create', (req, res) => {
 //    (async () => {
