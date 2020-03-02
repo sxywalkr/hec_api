@@ -595,10 +595,10 @@ app.post('/api/get-list-jadwal-operasi', (req, res) => {
       var xtoken = req.headers['x-token'];
       var tanggalawal = req.body.tanggalawal;
       if (!validate(tanggalawal, 'YYYY-MM-DD')) { return res.status(500).send('format tanggalawal not valid') }
-      if (dayjs(tanggalawal).isBefore(dayjs()) === true) { return res.status(500).send('tanggalawal harus H+1') }
+      // if (dayjs(tanggalawal).isBefore(dayjs()) === true) { return res.status(500).send('tanggalawal harus H+1') }
       var tanggalakhir = req.body.tanggalakhir;
       if (!validate(tanggalakhir, 'YYYY-MM-DD')) { return res.status(500).send('format tanggalakhir not valid') }
-      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) { return res.status(500).send('tanggalakhir harus H+2') }
+      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) { return res.status(500).send('tanggalakhir harus lebih besar dari tanggalawal') }
       var response = {};
       // var nopeserta = req.body.nopeserta;
       // if (!nopeserta || nopeserta.length !== 13) { return res.status(500).send('nopeserta not valid') }
