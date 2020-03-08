@@ -524,7 +524,8 @@ app.post('/api/get-list-kode-booking-operasi', (req, res) => {
             username = decoded.username;
             password = decoded.password;
             if (username === 'hecbpjs' && password === 'superpassword') {
-               admin.database().ref('usersDev').orderByChild('userNoBpjs').equalTo(nopeserta).once('value')
+               // console.log(username, password)
+               admin.database().ref('users').orderByChild('userNoBpjs').equalTo(nopeserta).once('value')
                   .then((snapshot) => {
                      if (snapshot.exists()) {
                         // console.log('////////// user ada di db')
@@ -572,7 +573,7 @@ app.post('/api/get-list-kode-booking-operasi', (req, res) => {
                         //       return res.status(200).send({response, metadata});
                         //    }
                         // })
-                        return res.status(500).send('unregistered login');
+                        return res.status(500).send('data tidak di temukan');
                      }
                   })
             } else {
