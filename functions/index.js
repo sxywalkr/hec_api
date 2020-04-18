@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const dayjs = require('dayjs');
@@ -46,15 +47,44 @@ app.get('/api/tes', (req, res) => {
    }
 })
 
+// <?php 
+//    $data = "8004";
+//    $secretKey = "1iH08C361F";
+//          // Computes the timestamp
+//           date_default_timezone_set('UTC');
+//           $tStamp = strval(time()-strtotime('1970-01-01 00:00:00'));
+//            // Computes the signature by hashing the salt with the secret key as the key
+//    $signature = hash_hmac('sha256', $data."&".$tStamp, $secretKey, true);
+
+//    // base64 encode…
+//    $encodedSignature = base64_encode($signature);
+
+//    // urlencode…
+//    // $encodedSignature = urlencode($encodedSignature);
+
+//    echo "X-cons-id: " .$data ." ";
+//    echo "X-timestamp:" .$tStamp ." ";
+//    echo "X-signature: " .$encodedSignature;
+// ?>
+
+app.get('/api/vclaim', (req, res) => {
+   let data = 8004;
+   let secretKey = '1iH08C361F';
+   let timeStamp = new Date().getTime()
+   var hash = crypto.createHmac('SHA256', secretKey).update(data + '&' + timeStamp).digest('base64');
+   // return res.status(200).send({ 'X-cons-id': data, 'X-timestamp': timeStamp, 'X-signature': hash })
+   return res.status(200).send({ '1': timeStamp, '2': hash })
+})
+
 // token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhlY2JwanMiLCJwYXNzd29yZCI6InN1cGVycGFzc3dvcmQiLCJpYXQiOjE1ODE3MjA1MjB9.buwD9uBjATjGKSnAHtBc34oORIyFvkhspKMvCQoB8W0
 app.post('/api/token', (req, res) => {
    try {
       var username = req.body.username;
       var password = req.body.password;
       // console.log(req.headers.username, password)
-      if (username !== 'hecbpjs' || password !== 'superpassword' || !username || !password) { 
+      if (username !== 'hecbpjs' || password !== 'superpassword' || !username || !password) {
          // return res.status(500).send('login not valid') 
-         return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+         return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
       }
 
       jwt.sign({ username, password }, 'secret', function (err, token) {
@@ -64,13 +94,13 @@ app.post('/api/token', (req, res) => {
             return res.status(200).send({ response, metadata });
             // console.log('token', token);
          } catch (err) {
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
             // console.log(err);
          }
       });
    }
    catch (error) {
-      return res.status(500).send({ response : { message: err, code: 400  }});
+      return res.status(500).send({ response: { message: err, code: 400 } });
    }
 });
 
@@ -80,58 +110,58 @@ app.post('/api/get-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var nomorkartu = req.body.nomorkartu;
-      if (!nomorkartu || nomorkartu.length !== 13) { 
+      if (!nomorkartu || nomorkartu.length !== 13) {
          // return res.status(500).send('nomorkartu not valid') 
-         return res.status(500).send({ response : { message: 'nomorkartu tidak valid.', code: 402  }});
+         return res.status(500).send({ response: { message: 'nomorkartu tidak valid.', code: 402 } });
       }
       var nik = req.body.nik;
-      if (!nik || nik.length !== 16) { 
+      if (!nik || nik.length !== 16) {
          // return res.status(500).send('nik not valid') 
-      return res.status(500).send({ response : { message: 'nik not valid.', code: 403  }});
+         return res.status(500).send({ response: { message: 'nik not valid.', code: 403 } });
       }
       var tanggalperiksa = req.body.tanggalperiksa;
-      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalperiksa not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalperiksa not valid.', code: 404  }});
+         return res.status(500).send({ response: { message: 'Format tanggalperiksa not valid.', code: 404 } });
       }
       // console.log(dayjs())
-      if (dayjs(tanggalperiksa).isBefore(dayjs()) === true) { 
+      if (dayjs(tanggalperiksa).isBefore(dayjs()) === true) {
          // return res.status(500).send('tanggalperiksa harus H+1') 
-         return res.status(500).send({ response : { message: 'tanggalperiksa harus H+1.', code: 405  }});
+         return res.status(500).send({ response: { message: 'tanggalperiksa harus H+1.', code: 405 } });
       }
-      if (dayjs(tanggalperiksa).day() === 0) { 
+      if (dayjs(tanggalperiksa).day() === 0) {
          // return res.status(500).send('tanggalperiksa tidak boleh minggu')
-         return res.status(500).send({ response : { message: 'tanggalperiksa tidak boleh hari minggu.', code: 406  }}); 
+         return res.status(500).send({ response: { message: 'tanggalperiksa tidak boleh hari minggu.', code: 406 } });
       }
-      if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) { 
+      if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) {
          // return res.status(500).send('tanggalperiksa <90 hari tanggalkunjungan') 
-         return res.status(500).send({ response : { message: 'tanggalperiksa harus sebelum 90 hari tanggal kunjungan.', code: 407  }});
+         return res.status(500).send({ response: { message: 'tanggalperiksa harus sebelum 90 hari tanggal kunjungan.', code: 407 } });
       }
       var kodepoli = req.body.kodepoli;
-      if (kodepoli !== 'MAT') { 
+      if (kodepoli !== 'MAT') {
          // return res.status(500).send('kodepoli not valid') 
-         return res.status(500).send({ response : { message: 'kodepoli not valide', code: 408  }});
+         return res.status(500).send({ response: { message: 'kodepoli not valide', code: 408 } });
       }
       var nomorreferensi = req.body.nomorreferensi;
-      if (!nomorreferensi) { 
+      if (!nomorreferensi) {
          // return res.status(500).send('nomorreferensi not valid') 
-         return res.status(500).send({ response : { message: 'nomorreferensi not valid', code: 409  }});
+         return res.status(500).send({ response: { message: 'nomorreferensi not valid', code: 409 } });
       }
       var jenisreferensi = req.body.jenisreferensi;
       // console.log(jenisreferensi)
-      if (jenisreferensi > 2 || jenisreferensi < 1) { 
+      if (jenisreferensi > 2 || jenisreferensi < 1) {
          // return res.status(500).send('jenisreferensi not valid') 
-         return res.status(500).send({ response : { message: 'jenisreferensi not valid', code: 410  }});
+         return res.status(500).send({ response: { message: 'jenisreferensi not valid', code: 410 } });
       }
       var jenisrequest = req.body.jenisrequest;
-      if (jenisrequest > 2 || jenisrequest < 1) { 
+      if (jenisrequest > 2 || jenisrequest < 1) {
          // return res.status(500).send('jenisrequest not valid') 
-         return res.status(500).send({ response : { message: 'jenisrequest not valid', code: 411  }});
+         return res.status(500).send({ response: { message: 'jenisrequest not valid', code: 411 } });
       }
       var polieksekutif = req.body.polieksekutif;
-      if (polieksekutif !== 0) { 
+      if (polieksekutif !== 0) {
          // return res.status(500).send('polieksekutif not valid') 
-         return res.status(500).send({ response : { message: 'polieksekutif not valid', code: 412  }});
+         return res.status(500).send({ response: { message: 'polieksekutif not valid', code: 412 } });
       }
 
       var response = {};
@@ -146,9 +176,9 @@ app.post('/api/get-antrian', (req, res) => {
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
          // console.log(decoded.username, decoded.password) // bar
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -484,15 +514,15 @@ app.post('/api/get-antrian', (req, res) => {
                   })
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
-      return res.status(500).send({ response : { message: err, code: 400  }});
+      return res.status(500).send({ response: { message: err, code: 400 } });
    }
 });
 
@@ -504,27 +534,27 @@ app.post('/api/get-rekap-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalperiksa = req.body.tanggalperiksa;
-      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) {
          // return res.status(500).send('tanggalperiksa not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalperiksa not valid.', code: 404  }});
+         return res.status(500).send({ response: { message: 'Format tanggalperiksa not valid.', code: 404 } });
       }
       var kodepoli = req.body.kodepoli;
-      if (kodepoli !== 'MAT') { 
+      if (kodepoli !== 'MAT') {
          // return res.status(500).send('kodepoli not valid') 
-         return res.status(500).send({ response : { message: 'kodepoli not valide', code: 408  }});
+         return res.status(500).send({ response: { message: 'kodepoli not valide', code: 408 } });
       }
       var polieksekutif = req.body.polieksekutif;
-      if (polieksekutif !== 0) { 
+      if (polieksekutif !== 0) {
          // return res.status(500).send('polieksekutif not valid') 
-         return res.status(500).send({ response : { message: 'polieksekutif not valid', code: 412  }});
+         return res.status(500).send({ response: { message: 'polieksekutif not valid', code: 412 } });
       }
       var response = {};
       response.namapoli = 'Poli Mata';
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -545,24 +575,24 @@ app.post('/api/get-rekap-antrian', (req, res) => {
                            return res.status(200).send({ response, metadata })
                         } else {
                            // return res.status(500).send('no data');
-                           return res.status(500).send({ response : { message: 'Data tidak ditemukan.', code: 413  }});
+                           return res.status(500).send({ response: { message: 'Data tidak ditemukan.', code: 413 } });
                         }
                      })
                }
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // return res.status(500).send(err);
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
             // console.log(err);
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 
@@ -571,16 +601,16 @@ app.post('/api/get-list-kode-booking-operasi', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var nopeserta = req.body.nopeserta;
-      if (!nopeserta || nopeserta.length !== 13) { 
+      if (!nopeserta || nopeserta.length !== 13) {
          // return res.status(500).send('nopeserta not valid') 
-         return res.status(500).send({ response : { message: 'nomorkartu tidak valid.', code: 402  }});
+         return res.status(500).send({ response: { message: 'nomorkartu tidak valid.', code: 402 } });
       }
       var response = {};
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -636,22 +666,22 @@ app.post('/api/get-list-kode-booking-operasi', (req, res) => {
                         //    }
                         // })
                         // return res.status(500).send('data tidak di temukan');
-                        return res.status(500).send({ response : { message: 'Data tidak ditemukan', code: 413  }});
+                        return res.status(500).send({ response: { message: 'Data tidak ditemukan', code: 413 } });
                      }
                   })
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // console.log(err)
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - api get list kode booking operasi ***** /////
@@ -661,28 +691,28 @@ app.post('/api/get-list-jadwal-operasi', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalawal = req.body.tanggalawal;
-      if (!validate(tanggalawal, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalawal, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalawal not valid') 
-         return res.status(500).send({ response : { message: 'Format tannggalawal not valid.', code: 414  }});
+         return res.status(500).send({ response: { message: 'Format tannggalawal not valid.', code: 414 } });
       }
       // if (dayjs(tanggalawal).isBefore(dayjs()) === true) { return res.status(500).send('tanggalawal harus H+1') }
       var tanggalakhir = req.body.tanggalakhir;
-      if (!validate(tanggalakhir, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalakhir, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalakhir not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalakhir not valid.', code: 415  }});
+         return res.status(500).send({ response: { message: 'Format tanggalakhir not valid.', code: 415 } });
       }
-      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) { 
+      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) {
          // return res.status(500).send('tanggalakhir harus lebih besar dari tanggalawal') 
-         return res.status(500).send({ response : { message: 'tanggalakhir harus lebih besar tanggalawal.', code: 416 }});
+         return res.status(500).send({ response: { message: 'tanggalakhir harus lebih besar tanggalawal.', code: 416 } });
       }
       var response = {};
       // var nopeserta = req.body.nopeserta;
       // if (!nopeserta || nopeserta.length !== 13) { return res.status(500).send('nopeserta not valid') }
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -747,15 +777,15 @@ app.post('/api/get-list-jadwal-operasi', (req, res) => {
                // }
                // })
             } else {
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - api get list jadwal operasi ***** /////
@@ -774,11 +804,11 @@ app.post('/api/add-dummy-jadwal-operasi', (req, res) => {
          hecKoUserUid: 'K23DFp9kNYgU2wbqvVvzxqHPsry1',
          hecKoUserNoBpjs: '0002054566157'
       })
-      return res.status(200).send({ response : { message: 'OK', code: 200  }});
+      return res.status(200).send({ response: { message: 'OK', code: 200 } });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - api add dummy jadwal operasi ***** /////
@@ -791,9 +821,9 @@ app.post('/api/prod/token', (req, res) => {
    try {
       var username = req.body.username;
       var password = req.body.password;
-      if (username !== 'hecbpjs-keren' || password !== 'superpassword-keren' || !username || !password) { 
+      if (username !== 'hecbpjs-keren' || password !== 'superpassword-keren' || !username || !password) {
          // return res.status(500).send('login not valid') 
-         return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+         return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
       }
 
       jwt.sign({ username, password }, 'secret', function (err, token) {
@@ -803,13 +833,13 @@ app.post('/api/prod/token', (req, res) => {
             return res.status(200).send({ response, metadata });
          } catch (err) {
             // return res.status(500).send(err);
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: err, code: 400  }});
+      return res.status(500).send({ response: { message: err, code: 400 } });
    }
 });
 ///// ***** end - get token ***** /////
@@ -822,56 +852,56 @@ app.post('/api/prod/get-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var nomorkartu = req.body.nomorkartu;
-      if (!nomorkartu || nomorkartu.length !== 13) { 
+      if (!nomorkartu || nomorkartu.length !== 13) {
          // return res.status(500).send('nomorkartu not valid') 
-         return res.status(500).send({ response : { message: 'nomorkartu tidak valid.', code: 402  }});
+         return res.status(500).send({ response: { message: 'nomorkartu tidak valid.', code: 402 } });
       }
       var nik = req.body.nik;
-      if (!nik || nik.length !== 16) { 
+      if (!nik || nik.length !== 16) {
          // return res.status(500).send('nik not valid') 
-      return res.status(500).send({ response : { message: 'nik not valid.', code: 403  }});
+         return res.status(500).send({ response: { message: 'nik not valid.', code: 403 } });
       }
       var tanggalperiksa = req.body.tanggalperiksa;
-      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalperiksa not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalperiksa not valid.', code: 404  }});
+         return res.status(500).send({ response: { message: 'Format tanggalperiksa not valid.', code: 404 } });
       }
-      if (dayjs(tanggalperiksa).isBefore(dayjs()) === true) { 
+      if (dayjs(tanggalperiksa).isBefore(dayjs()) === true) {
          // return res.status(500).send('tanggalperiksa harus H+1') 
-         return res.status(500).send({ response : { message: 'tanggalperiksa harus H+1.', code: 405  }});
+         return res.status(500).send({ response: { message: 'tanggalperiksa harus H+1.', code: 405 } });
       }
-      if (dayjs(tanggalperiksa).day() === 0) { 
+      if (dayjs(tanggalperiksa).day() === 0) {
          // return res.status(500).send('tanggalperiksa tidak boleh minggu') 
-         return res.status(500).send({ response : { message: 'tanggalperiksa tidak boleh hari minggu.', code: 406  }}); 
+         return res.status(500).send({ response: { message: 'tanggalperiksa tidak boleh hari minggu.', code: 406 } });
       }
-      if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) { 
+      if (dayjs(tanggalperiksa).diff(dayjs(), 'day') >= 90) {
          // return res.status(500).send('tanggalperiksa <90 hari tanggalkunjungan') 
-         return res.status(500).send({ response : { message: 'tanggalperiksa harus sebelum 90 hari tanggal kunjungan.', code: 407  }});
+         return res.status(500).send({ response: { message: 'tanggalperiksa harus sebelum 90 hari tanggal kunjungan.', code: 407 } });
       }
       var kodepoli = req.body.kodepoli;
-      if (kodepoli !== 'MAT') { 
+      if (kodepoli !== 'MAT') {
          // return res.status(500).send('kodepoli not valid') 
-         return res.status(500).send({ response : { message: 'kodepoli not valide', code: 408  }});
+         return res.status(500).send({ response: { message: 'kodepoli not valide', code: 408 } });
       }
       var nomorreferensi = req.body.nomorreferensi;
-      if (!nomorreferensi) { 
+      if (!nomorreferensi) {
          // return res.status(500).send('nomorreferensi not valid') 
-         return res.status(500).send({ response : { message: 'nomorreferensi not valid', code: 409  }});
+         return res.status(500).send({ response: { message: 'nomorreferensi not valid', code: 409 } });
       }
       var jenisreferensi = req.body.jenisreferensi;
-      if (jenisreferensi > 2 || jenisreferensi < 1) { 
+      if (jenisreferensi > 2 || jenisreferensi < 1) {
          // return res.status(500).send('jenisreferensi not valid') 
-         return res.status(500).send({ response : { message: 'jenisreferensi not valid', code: 410  }});
+         return res.status(500).send({ response: { message: 'jenisreferensi not valid', code: 410 } });
       }
       var jenisrequest = req.body.jenisrequest;
-      if (jenisrequest > 2 || jenisrequest < 1) { 
+      if (jenisrequest > 2 || jenisrequest < 1) {
          // return res.status(500).send('jenisrequest not valid') 
-         return res.status(500).send({ response : { message: 'jenisrequest not valid', code: 411  }});
+         return res.status(500).send({ response: { message: 'jenisrequest not valid', code: 411 } });
       }
       var polieksekutif = req.body.polieksekutif;
-      if (polieksekutif !== 0) { 
+      if (polieksekutif !== 0) {
          // return res.status(500).send('polieksekutif not valid') 
-         return res.status(500).send({ response : { message: 'polieksekutif not valid', code: 412  }});
+         return res.status(500).send({ response: { message: 'polieksekutif not valid', code: 412 } });
       }
 
       var response = {};
@@ -884,9 +914,9 @@ app.post('/api/prod/get-antrian', (req, res) => {
       }
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -1221,16 +1251,16 @@ app.post('/api/prod/get-antrian', (req, res) => {
                   })
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // console.log(err)
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - get antrian ***** /////
@@ -1242,27 +1272,27 @@ app.post('/api/prod/get-rekap-antrian', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalperiksa = req.body.tanggalperiksa;
-      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalperiksa, 'YYYY-MM-DD')) {
          // return res.status(500).send('tanggalperiksa not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalperiksa not valid.', code: 404  }});
+         return res.status(500).send({ response: { message: 'Format tanggalperiksa not valid.', code: 404 } });
       }
       var kodepoli = req.body.kodepoli;
-      if (kodepoli !== 'MAT') { 
+      if (kodepoli !== 'MAT') {
          // return res.status(500).send('kodepoli not valid') 
-         return res.status(500).send({ response : { message: 'kodepoli not valide', code: 408  }});
+         return res.status(500).send({ response: { message: 'kodepoli not valide', code: 408 } });
       }
       var polieksekutif = req.body.polieksekutif;
-      if (polieksekutif !== 0) { 
+      if (polieksekutif !== 0) {
          // return res.status(500).send('polieksekutif not valid') 
-         return res.status(500).send({ response : { message: 'polieksekutif not valid', code: 412  }});
+         return res.status(500).send({ response: { message: 'polieksekutif not valid', code: 412 } });
       }
       var response = {};
       response.namapoli = 'Poli Mata';
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -1283,24 +1313,24 @@ app.post('/api/prod/get-rekap-antrian', (req, res) => {
                            return res.status(200).send({ response, metadata })
                         } else {
                            // return res.status(500).send('no data');
-                           return res.status(500).send({ response : { message: 'Data tidak ditemukan', code: 413  }});
+                           return res.status(500).send({ response: { message: 'Data tidak ditemukan', code: 413 } });
                         }
                      })
                }
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // return res.status(500).send(err);
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
             // console.log(err);
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 
@@ -1313,16 +1343,16 @@ app.post('/api/prod/get-list-kode-booking-operasi', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var nopeserta = req.body.nopeserta;
-      if (!nopeserta || nopeserta.length !== 13) { 
+      if (!nopeserta || nopeserta.length !== 13) {
          // return res.status(500).send('nopeserta not valid') 
-         return res.status(500).send({ response : { message: 'nomorkartu tidak valid.', code: 402  }});
+         return res.status(500).send({ response: { message: 'nomorkartu tidak valid.', code: 402 } });
       }
       var response = {};
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -1377,22 +1407,22 @@ app.post('/api/prod/get-list-kode-booking-operasi', (req, res) => {
                         //    }
                         // })
                         // return res.status(500).send('unregistered login');
-                        return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+                        return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
                      }
                   })
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // console.log(err)
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - api get list kode booking operasi ***** /////
@@ -1402,28 +1432,28 @@ app.post('/api/prod/get-list-jadwal-operasi', (req, res) => {
    try {
       var xtoken = req.headers['x-token'];
       var tanggalawal = req.body.tanggalawal;
-      if (!validate(tanggalawal, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalawal, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalawal not valid') 
-         return res.status(500).send({ response : { message: 'Format tannggalawal not valid.', code: 414  }});
+         return res.status(500).send({ response: { message: 'Format tannggalawal not valid.', code: 414 } });
       }
       // if (dayjs(tanggalawal).isBefore(dayjs()) === true) { return res.status(500).send('tanggalawal harus H+1') }
       var tanggalakhir = req.body.tanggalakhir;
-      if (!validate(tanggalakhir, 'YYYY-MM-DD')) { 
+      if (!validate(tanggalakhir, 'YYYY-MM-DD')) {
          // return res.status(500).send('format tanggalakhir not valid') 
-         return res.status(500).send({ response : { message: 'Format tanggalakhir not valid.', code: 415  }});
+         return res.status(500).send({ response: { message: 'Format tanggalakhir not valid.', code: 415 } });
       }
-      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) { 
+      if (dayjs(tanggalakhir).isBefore(dayjs(tanggalawal)) === true) {
          // return res.status(500).send('tanggalakhir harus lebih besar dari tanggalawal') 
-         return res.status(500).send({ response : { message: 'tanggalakhir harus lebih besar tanggalawal.', code: 416 }});
+         return res.status(500).send({ response: { message: 'tanggalakhir harus lebih besar tanggalawal.', code: 416 } });
       }
       var response = {};
       // var nopeserta = req.body.nopeserta;
       // if (!nopeserta || nopeserta.length !== 13) { return res.status(500).send('nopeserta not valid') }
 
       jwt.verify(xtoken, 'secret', function (err, decoded) {
-         if (err) { 
+         if (err) {
             // return res.status(500).send(err); 
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
          try {
             username = decoded.username;
@@ -1458,17 +1488,17 @@ app.post('/api/prod/get-list-jadwal-operasi', (req, res) => {
                   })
             } else {
                // return res.status(500).send('unregistered login');
-               return res.status(500).send({ response : { message: 'Login not valid.', code: 401  }});
+               return res.status(500).send({ response: { message: 'Login not valid.', code: 401 } });
             }
          } catch (err) {
             // console.log(err)
-            return res.status(500).send({ response : { message: err, code: 400  }});
+            return res.status(500).send({ response: { message: err, code: 400 } });
          }
       });
    }
    catch (error) {
       // return res.status(500).send(error);
-      return res.status(500).send({ response : { message: error, code: 400  }});
+      return res.status(500).send({ response: { message: error, code: 400 } });
    }
 });
 ///// ***** end - api get list jadwal operasi ***** /////
