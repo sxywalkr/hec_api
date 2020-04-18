@@ -73,7 +73,7 @@ app.get('/api/vclaim', (req, res) => {
    let timeStamp = new Date().getTime()
    var hash = crypto.createHmac('SHA256', secretKey).update(data + '&' + timeStamp).digest('base64');
    // return res.status(200).send({ 'X-cons-id': data, 'X-timestamp': timeStamp, 'X-signature': hash })
-   return res.status(200).send({ '1': timeStamp, '2': hash })
+   return res.status(200).send({ 'd1': timeStamp, 'd2': hash })
 })
 
 // token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhlY2JwanMiLCJwYXNzd29yZCI6InN1cGVycGFzc3dvcmQiLCJpYXQiOjE1ODE3MjA1MjB9.buwD9uBjATjGKSnAHtBc34oORIyFvkhspKMvCQoB8W0
