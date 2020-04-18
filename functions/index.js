@@ -70,7 +70,7 @@ app.get('/api/tes', (req, res) => {
 app.get('/api/vclaim', (req, res) => {
    let data = 8004;
    let secretKey = '1iH08C361F';
-   let timeStamp = new Date().getTime()
+   let timeStamp = Math.floor(new Date().getTime()/1000)
    var hash = crypto.createHmac('SHA256', secretKey).update(data + '&' + timeStamp).digest('base64');
    // return res.status(200).send({ 'X-cons-id': data, 'X-timestamp': timeStamp, 'X-signature': hash })
    return res.status(200).send({ 'd1': timeStamp, 'd2': hash })
